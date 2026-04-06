@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app" class="glass-panel">
+    <!-- Header -->
+    <header>
+      <h1></h1>
+      <button id="logout-btn" class="hidden">Lock</button>
+    </header>
+
+    <!-- Error/Message Container -->
+    <div id="message-box" class="hidden"></div>
+
+    <!-- Login/Register View -->
+    <section id="view-auth">
+      <h2 id="auth-title">Login</h2>
+      <form id="auth-form">
+        <div class="input-group">
+          <label>Username</label>
+          <input type="text" id="auth-user" required autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label>Master Password</label>
+          <input type="password" id="auth-pass" required autocomplete="off">
+        </div>
+        <button type="submit" id="auth-submit-btn">Unlock</button>
+      </form>
+    </section>
+
+    <!-- Main Vault View -->
+    <section id="view-vault" class="hidden">
+      <!-- Search -->
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Regex search (e.g., .*google.*)" autocomplete="off">
+      </div>
+
+      <!-- Add Entry Form (Toggleable) -->
+      <div class="add-entry-container">
+        <button id="toggle-add-btn">⬇ Add New Entry</button>
+        <form id="add-entry-form" class="hidden glass-panel">
+          <input type="text" id="entry-site" placeholder="Website" required autocomplete="off">
+          <input type="text" id="entry-user" placeholder="Username" required autocomplete="off">
+          <input type="password" id="entry-pass" placeholder="Password" required autocomplete="off">
+          <button type="submit" id="save-btn">Save Entry</button>
+        </form>
+      </div>
+
+      <!-- List of Entries -->
+      <ul id="entries-list"></ul>
+    </section>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

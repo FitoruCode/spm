@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Secure Password Manager",
+  "version": "1.0",
+  "description": "Securely store and retrieve website passwords.",
+  "permissions": [
+    "storage"
+  ],
+  "background": {
+    "scripts": ["backend/crypto_utils.js", "backend/background.js"]
+  },
+  "action": {
+    "default_popup": "frontend/popup.html",
+    "default_title": "Open Password Manager"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "pwd_manager@example.com",
+      "strict_min_version": "109.0"
+    }
+  }
+}
