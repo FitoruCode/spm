@@ -1,3 +1,5 @@
+# Zespół: Wiktor Miśkowiec, Miłosz Ziemba
+
 # Wtyczka 
 
 Dokumentacja projektu wtyczki managera haseł do przeglądarki Firefox - silnik gecko.
@@ -83,6 +85,18 @@ Szyfrowanie/odszyfrowanie danych opiera się na
 
 ?-iv nietajna lecz stosowana dla eliminacji wzorców między hashami
 
+## Endpointy
+
+Funkcjonalność analogiczna do powyższego opisu
+
+* register
+* login
+* logout
+* delete_entry
+* add_entry
+* search_entries
+
+
 ## Technologie
 
 * ManifestV3
@@ -99,8 +113,19 @@ Szyfrowanie/odszyfrowanie danych opiera się na
 * JSON
 * Base64 encoding
 
+## Testowanie
+
+* Testy manualne - ograniczenie przez komunikację api przeglądarki
+  
 ## TODO
 
 * Autouzupełnianie haseł na stronie w procesie logowania
 * 2FA
 * automatyczny installator rozszerzenia
+
+## Harmonogram
+
+* 29 kwietnia - autouzupełnianie
+* 15 maj - 2FA
+* 30 maj - instalator
+* 6 czerwca - testy i weryfikacja
