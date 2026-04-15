@@ -13,6 +13,13 @@
     "default_popup": "frontend/popup.html",
     "default_title": "Open Password Manager"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["frontend/autofill.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "browser_specific_settings": {
     "gecko": {
       "id": "pwd_manager@example.com",

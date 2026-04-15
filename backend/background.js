@@ -148,6 +148,27 @@ async function handleSearchEntries(regexStr) {
   }
 }
 
+async function handleGetCredentialsForUrl(hostname) {
+  if (!sessionKey) return { credentials: [] };
+  resetAutoLock();
+  
+  const storageData = await browser.storage.local.get(['entries']);
+  const entries = storageData.entries || [];
+  
+  let matches = [];
+  for (const encryptedObj of entries) {
+    try {
+      const decrypted = await CryptoUtils.decryptData(encryptedObj, sessionKey);
+      if (decrypted.website && (hostname.includes(decrypted.website) || decrypted.website.includes(hostname))) {
+        matches.push({ username: decrypted.username, password: decrypted.password });
+      }
+    } catch (e) {
+      console.error("Failed to decrypt an entry", e);
+    }
+  }
+  return { credentials: matches };
+}
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "get_status") {
     browser.storage.local.get(['authData']).then(data => {
@@ -196,6 +217,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "search_entries") {
     handleSearchEntries(message.regex)
+      .then(res => sendResponse(res))
+      .catch(err => sendResponse({ error: err.message }));
+    return true;
+  }
+
+  if (message.action === "get_credentials_for_url") {
+    handleGetCredentialsForUrl(message.hostname)
       .then(res => sendResponse(res))
       .catch(err => sendResponse({ error: err.message }));
     return true;
