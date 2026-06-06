@@ -39,13 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registered) {
       subtitle.textContent = 'Unlock your vault';
       btnLabel.textContent = 'Unlock';
-      modeHint.textContent = "Don't have an account?";
-      modeSwitchBtn.textContent = 'Register instead';
+      modeHint.textContent = "";
+      modeSwitchBtn.textContent = '';
     } else {
       subtitle.textContent = 'Create your secure vault';
       btnLabel.textContent = 'Create Vault';
-      modeHint.textContent = 'Already registered?';
-      modeSwitchBtn.textContent = 'Login instead';
+      modeHint.textContent = '';
+      modeSwitchBtn.textContent = '';
     }
   }
 
@@ -57,12 +57,13 @@ document.addEventListener('DOMContentLoaded', () => {
     authUser.focus();
   });
 
-  modeSwitchBtn.addEventListener('click', () => {
-    setMode(!isRegistered);
-    msgBox.classList.add('hidden');
-    authForm.reset();
-    resetFile();
-  });
+  // Wsm to usless, operujemy na 1 użytkowniku...
+  //modeSwitchBtn.addEventListener('click', () => {
+  //  setMode(!isRegistered);
+  //  msgBox.classList.add('hidden');
+  //  authForm.reset();
+  //  resetFile();
+  //});
 
   async function processFile(file) {
     if (!file) return;
