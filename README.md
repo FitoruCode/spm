@@ -135,13 +135,17 @@ Zapytanie obsługiwane przez ```handleGetCredentialsForUrl```, sprawdzamy czy dl
 
 W opcji dodaj tymczasową wtyczkę wybieramy plik ```manifest.json```.
 
-### Firefox developer
-
 ### Chrome
+
+W zakładce wtyczki, ustawiamy ```Developer mode``` na ```true```, po czym wykorzystujemy ```Load unpacked``` wybierając folder zawierający ```manifest.json```
+
+### Firefox - wersja developera
+
+Normalna instalacja.
 
 ## Testy
 
-
+Ze względu na specyfikę projektu (ograniczenie do środowiska przeglądarki i niska ilość scenariuszy) wykonano testowanie manualne.
 
 ## Technologie
 
