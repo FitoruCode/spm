@@ -22,7 +22,6 @@ const CryptoUtils = {
     return this.ab2base64(salt);
   },
 
-  // Convert .txt file content to a large hex number via SHA-256
   fileTextToNumber: async function(text) {
     const buffer = new TextEncoder().encode(text);
     const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -30,7 +29,6 @@ const CryptoUtils = {
     return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
   },
 
-  // Derive primary key from password
   deriveKey: async function(password, saltBase64) {
     const salt = this.base642ab(saltBase64);
     const enc = new TextEncoder();
@@ -50,7 +48,6 @@ const CryptoUtils = {
     );
   },
 
-  // Derive secondary key from file number
   deriveKey2: async function(fileNumber, salt2Base64) {
     const salt = this.base642ab(salt2Base64);
     const enc = new TextEncoder();
@@ -70,9 +67,7 @@ const CryptoUtils = {
     );
   },
 
-  // Encrypt with key1 (password), then encrypt the result with key2 (file)
   encryptData: async function(data, key1, key2) {
-    // Inner layer: encrypt plaintext with sessionKey (password-derived)
     const iv1 = crypto.getRandomValues(new Uint8Array(12));
     const plaintext = JSON.stringify(data);
     const encoded = new TextEncoder().encode(plaintext);
@@ -86,7 +81,6 @@ const CryptoUtils = {
       ciphertext: this.ab2base64(ciphertext1)
     };
 
-    // Outer layer: encrypt the inner JSON object with sessionKey2 (file-derived)
     const iv2 = crypto.getRandomValues(new Uint8Array(12));
     const innerEncoded = new TextEncoder().encode(JSON.stringify(inner));
     const ciphertext2 = await crypto.subtle.encrypt(
@@ -100,9 +94,7 @@ const CryptoUtils = {
     };
   },
 
-  // Decrypt outer layer with key2 (file), then inner with key1 (password)
   decryptData: async function(encryptedObj, key1, key2) {
-    // Outer layer
     const iv2 = this.base642ab(encryptedObj.iv);
     const ciphertext2 = this.base642ab(encryptedObj.ciphertext);
     const innerBytes = await crypto.subtle.decrypt(
@@ -112,7 +104,6 @@ const CryptoUtils = {
     );
     const inner = JSON.parse(new TextDecoder().decode(innerBytes));
 
-    // Inner layer
     const iv1 = this.base642ab(inner.iv);
     const ciphertext1 = this.base642ab(inner.ciphertext);
     const decrypted = await crypto.subtle.decrypt(

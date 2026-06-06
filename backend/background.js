@@ -41,7 +41,6 @@ async function handleRegister(username, password, fileNumber) {
   const salt = CryptoUtils.generateSalt();
   const salt2 = CryptoUtils.generateSalt();
 
-  // Verification hash includes password + salt + fileNumber
   const hashVerify = await CryptoUtils.hashString(password + salt + fileNumber);
 
   sessionKey = await CryptoUtils.deriveKey(password, salt);
