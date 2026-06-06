@@ -16,10 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const modeHint    = document.getElementById('mode-hint');
   const modeSwitchBtn = document.getElementById('mode-switch-btn');
 
-  let fileNumber = null;   // hex string derived from file content
+  let fileNumber = null;
   let isRegistered = false;
 
-  // ── Helpers ─────────────────────────────────────────────────────────────
   function showMessage(text, type = 'error') {
     msgBox.textContent = text;
     msgBox.className = type === 'error' ? 'msg-error' : 'msg-success';
@@ -50,17 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ── Init ─────────────────────────────────────────────────────────────────
   browser.runtime.sendMessage({ action: 'get_status' }).then(res => {
     setMode(res.isRegistered);
     if (res.isLoggedIn) {
-      // Already unlocked — nothing to do here, close this tab
       showMessage('Already unlocked! You can close this tab.', 'success');
     }
     authUser.focus();
   });
 
-  // ── Mode switch ───────────────────────────────────────────────────────────
   modeSwitchBtn.addEventListener('click', () => {
     setMode(!isRegistered);
     msgBox.classList.add('hidden');
@@ -68,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
     resetFile();
   });
 
-  // ── File handling ─────────────────────────────────────────────────────────
   async function processFile(file) {
     if (!file) return;
     if (!file.name.endsWith('.txt') && file.type !== 'text/plain') {
@@ -82,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       fileNumber = await CryptoUtils.fileTextToNumber(text);
-      // Update UI
       dropZone.classList.add('loaded');
       dropIcon.textContent = '✅';
       dropText.textContent = file.name;
@@ -107,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.disabled = true;
   }
 
-  // Click on drop zone → open file picker
   dropZone.addEventListener('click', () => fileInput.click());
   dropZone.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
@@ -117,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fileInput.files[0]) processFile(fileInput.files[0]);
   });
 
-  // Drag & drop
   dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
   dropZone.addEventListener('dragleave', e => { if (!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('dragover'); });
   dropZone.addEventListener('drop', e => {
@@ -127,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (file) processFile(file);
   });
 
-  // Also allow drop anywhere on page
   document.addEventListener('dragover', e => e.preventDefault());
   document.addEventListener('drop', e => {
     e.preventDefault();
@@ -135,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (file) processFile(file);
   });
 
-  // ── Form submit ───────────────────────────────────────────────────────────
   authForm.addEventListener('submit', async e => {
     e.preventDefault();
     if (!fileNumber) { showMessage('Please select your key file first.', 'error'); return; }

@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     entryPass:     document.getElementById('entry-pass')
   };
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
   function showMessage(msg, isError = false) {
     DOM.msgBox.textContent = msg;
     DOM.msgBox.className = isError ? 'msg-error' : 'msg-success';
@@ -38,25 +37,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ── Init ───────────────────────────────────────────────────────────────────
   browser.runtime.sendMessage({ action: 'get_status' }).then(res => {
     setView(res.isLoggedIn);
   });
 
-  // ── Open auth tab ──────────────────────────────────────────────────────────
   DOM.openAuthBtn.addEventListener('click', () => {
     browser.tabs.create({ url: browser.runtime.getURL('frontend/auth.html') });
     window.close();
   });
 
-  // ── Logout / Lock ──────────────────────────────────────────────────────────
   DOM.logoutBtn.addEventListener('click', () => {
     browser.runtime.sendMessage({ action: 'logout' }).then(() => {
       setView(false);
     });
   });
 
-  // ── Toggle Add Form ────────────────────────────────────────────────────────
   DOM.toggleAddBtn.addEventListener('click', () => {
     DOM.addEntryForm.classList.toggle('hidden');
     if (!DOM.addEntryForm.classList.contains('hidden')) {
@@ -64,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── Add Entry ──────────────────────────────────────────────────────────────
   DOM.addEntryForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const website  = DOM.entrySite.value;
@@ -83,12 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── Search ─────────────────────────────────────────────────────────────────
   DOM.searchInput.addEventListener('input', (e) => {
     loadEntries(e.target.value);
   });
 
-  // ── Load Entries ───────────────────────────────────────────────────────────
   function loadEntries(regex = '') {
     browser.runtime.sendMessage({ action: 'search_entries', regex }).then(res => {
       if (res.error) { showMessage(res.error, true); return; }
@@ -140,8 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ── Listen for auth tab completion ─────────────────────────────────────────
-  // When the auth tab calls window.close() after success, re-check our status
+
   browser.tabs.onRemoved.addListener(() => {
     browser.runtime.sendMessage({ action: 'get_status' }).then(res => {
       if (res.isLoggedIn) setView(true);

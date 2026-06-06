@@ -78,7 +78,6 @@ button:hover {
   background-color: #475569;
 }
 
-/* ── Locked State ─────────────────────────────────────────── */
 #view-locked {
   flex: 1;
   display: flex;
@@ -139,7 +138,6 @@ button:hover {
   box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45);
 }
 
-/* ── Messages ─────────────────────────────────────────────── */
 .hidden {
   display: none !important;
 }
@@ -164,7 +162,6 @@ button:hover {
   border: 1px solid var(--success);
 }
 
-/* ── Vault inputs ─────────────────────────────────────────── */
 input {
   background: rgba(15, 23, 42, 0.8);
   border: 1px solid var(--glass-border);
@@ -219,7 +216,6 @@ input:focus {
   margin-top: 4px;
 }
 
-/* ── Entry list ───────────────────────────────────────────── */
 #entries-list {
   list-style: none;
   padding: 0;
