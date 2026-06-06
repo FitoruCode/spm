@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPM — Secure Password Manager</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+
+<body>
+  <div class="bg-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <main class="auth-card glass">
+    <div class="brand">
+      <div class="brand-icon">🔐</div>
+      <h1>Secure Password Manager</h1>
+      <p class="brand-sub" id="auth-subtitle">Authenticate to continue</p>
+    </div>
+
+    <div id="message-box" class="hidden"></div>
+
+    <form id="auth-form" autocomplete="off">
+      <div class="field-group">
+        <label for="auth-user">Username</label>
+        <input type="text" id="auth-user" placeholder="Enter username" required autocomplete="off">
+      </div>
+
+      <div class="field-group">
+        <label for="auth-pass">Master Password</label>
+        <input type="password" id="auth-pass" placeholder="Enter master password" required autocomplete="off">
+      </div>
+
+      <div class="field-group">
+        <label>Key File <span class="label-hint">(.txt required)</span></label>
+        <!-- Hidden native file input used as fallback -->
+        <input type="file" id="file-input" accept=".txt" class="hidden">
+        <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
+          aria-label="Drop key file here or click to browse">
+          <div class="drop-inner">
+            <div class="drop-icon" id="drop-icon">📄</div>
+            <div class="drop-text" id="drop-text">Drag &amp; drop your key file here</div>
+            <div class="drop-hint" id="drop-hint">or <span class="link-text">click to browse</span></div>
+          </div>
+        </div>
+        <div id="file-info" class="file-info hidden"></div>
+      </div>
+
+      <button type="submit" id="auth-submit-btn" disabled>
+        <span id="btn-label">Unlock</span>
+        <span id="btn-spinner" class="spinner hidden"></span>
+      </button>
+    </form>
+
+    <div class="mode-toggle">
+      <span id="mode-hint"></span>
+      <button type="button" id="mode-switch-btn" class="link-btn"></button>
+    </div>
+  </main>
+
+  <script src="../backend/crypto_utils.js"></script>
+  <script src="auth.js"></script>
+</body>
+
+</html>

@@ -8,27 +8,21 @@
   <div id="app" class="glass-panel">
     <!-- Header -->
     <header>
-      <h1></h1>
+      <h1>🔐 SPM</h1>
       <button id="logout-btn" class="hidden">Lock</button>
     </header>
 
     <!-- Error/Message Container -->
     <div id="message-box" class="hidden"></div>
 
-    <!-- Login/Register View -->
-    <section id="view-auth">
-      <h2 id="auth-title">Login</h2>
-      <form id="auth-form">
-        <div class="input-group">
-          <label>Username</label>
-          <input type="text" id="auth-user" required autocomplete="off">
-        </div>
-        <div class="input-group">
-          <label>Master Password</label>
-          <input type="password" id="auth-pass" required autocomplete="off">
-        </div>
-        <button type="submit" id="auth-submit-btn">Unlock</button>
-      </form>
+    <!-- Locked / Not-logged-in View -->
+    <section id="view-locked" class="hidden">
+      <div class="locked-state">
+        <div class="lock-icon">🔒</div>
+        <p class="lock-msg">Your vault is locked.</p>
+        <p class="lock-sub">Use your key file to unlock.</p>
+        <button id="open-auth-btn">Open Login / Register</button>
+      </div>
     </section>
 
     <!-- Main Vault View -->

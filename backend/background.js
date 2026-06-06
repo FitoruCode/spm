@@ -1,17 +1,19 @@
 let sessionKey = null;
+let sessionKey2 = null;
 let autoLockTimer = null;
 
 function resetAutoLock() {
   if (autoLockTimer) clearTimeout(autoLockTimer);
   autoLockTimer = setTimeout(() => {
     sessionKey = null;
+    sessionKey2 = null;
   }, 15 * 60 * 1000);
 }
 
 browser.runtime.onInstalled.addListener(() => {
   browser.storage.local.get(['authData', 'entries']).then(data => {
     let updates = {};
-    if (!data.authData) updates.authData = null; 
+    if (!data.authData) updates.authData = null;
     if (!data.entries) updates.entries = [];
     if (Object.keys(updates).length > 0) {
       browser.storage.local.set(updates);
@@ -19,59 +21,68 @@ browser.runtime.onInstalled.addListener(() => {
   });
 });
 
-async function handleRegister(username, password) {
+async function handleRegister(username, password, fileNumber) {
   const data = await browser.storage.local.get(['authData']);
   if (data.authData) {
     throw new Error("Already registered. Please login.");
   }
-  
+
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
   if (!passwordRegex.test(password)) {
     throw new Error("Master password must be 8+ chars and include a lowercase, uppercase, digit, and special character.");
   }
-  
-  const salt = CryptoUtils.generateSalt();
-  
-  const key = await CryptoUtils.deriveKey(password, salt);
-  
-  sessionKey = key;
-  resetAutoLock();
-  
 
-  const hashVerify = await CryptoUtils.hashString(password + salt);
-  
+  if (!fileNumber) {
+    throw new Error("A key file (.txt) is required for registration.");
+  }
+
+  const salt = CryptoUtils.generateSalt();
+  const salt2 = CryptoUtils.generateSalt();
+
+  // Verification hash includes password + salt + fileNumber
+  const hashVerify = await CryptoUtils.hashString(password + salt + fileNumber);
+
+  sessionKey = await CryptoUtils.deriveKey(password, salt);
+  sessionKey2 = await CryptoUtils.deriveKey2(fileNumber, salt2);
+  resetAutoLock();
+
   await browser.storage.local.set({
-    authData: { salt: salt, verify: hashVerify, username: username }
+    authData: { salt, salt2, verify: hashVerify, username }
   });
-  
+
   return { success: true };
 }
 
-async function handleLogin(username, password) {
+async function handleLogin(username, password, fileNumber) {
   const data = await browser.storage.local.get(['authData']);
   if (!data.authData) {
     throw new Error("Not registered yet.");
   }
-  
-  const { salt, verify, username: storedUsername } = data.authData;
+
+  if (!fileNumber) {
+    throw new Error("A key file (.txt) is required for login.");
+  }
+
+  const { salt, salt2, verify, username: storedUsername } = data.authData;
   if (username !== storedUsername) {
     throw new Error("Invalid username.");
   }
-  
-  const hashVerify = await CryptoUtils.hashString(password + salt);
+
+  const hashVerify = await CryptoUtils.hashString(password + salt + fileNumber);
   if (hashVerify !== verify) {
-    throw new Error("Invalid password.");
+    throw new Error("Invalid credentials or key file.");
   }
-  
+
   sessionKey = await CryptoUtils.deriveKey(password, salt);
+  sessionKey2 = await CryptoUtils.deriveKey2(fileNumber, salt2);
   resetAutoLock();
   return { success: true };
 }
 
 async function handleAddEntry(website, entryUsername, entryPassword) {
-  if (!sessionKey) throw new Error("Not authenticated");
+  if (!sessionKey || !sessionKey2) throw new Error("Not authenticated");
   resetAutoLock();
-  
+
   const dataToEncrypt = {
     id: crypto.randomUUID(),
     website,
@@ -79,28 +90,28 @@ async function handleAddEntry(website, entryUsername, entryPassword) {
     password: entryPassword,
     timestamp: Date.now()
   };
-  
-  const encryptedObj = await CryptoUtils.encryptData(dataToEncrypt, sessionKey);
-  
+
+  const encryptedObj = await CryptoUtils.encryptData(dataToEncrypt, sessionKey, sessionKey2);
+
   const storageData = await browser.storage.local.get(['entries']);
   const entries = storageData.entries || [];
   entries.push(encryptedObj);
-  
+
   await browser.storage.local.set({ entries });
   return { success: true };
 }
 
 async function handleDeleteEntry(id) {
-  if (!sessionKey) throw new Error("Not authenticated");
+  if (!sessionKey || !sessionKey2) throw new Error("Not authenticated");
   resetAutoLock();
 
   const storageData = await browser.storage.local.get(['entries']);
   const entries = storageData.entries || [];
-  
+
   let entryIndexToRemove = -1;
   for (let i = 0; i < entries.length; i++) {
     try {
-      const decrypted = await CryptoUtils.decryptData(entries[i], sessionKey);
+      const decrypted = await CryptoUtils.decryptData(entries[i], sessionKey, sessionKey2);
       const computedId = decrypted.id || (decrypted.website + "|" + decrypted.username + "|" + decrypted.timestamp);
       if (computedId === id) {
         entryIndexToRemove = i;
@@ -119,27 +130,27 @@ async function handleDeleteEntry(id) {
 }
 
 async function handleSearchEntries(regexStr) {
-  if (!sessionKey) throw new Error("Not authenticated");
+  if (!sessionKey || !sessionKey2) throw new Error("Not authenticated");
   resetAutoLock();
-  
+
   const storageData = await browser.storage.local.get(['entries']);
   const entries = storageData.entries || [];
-  
+
   let decryptedEntries = [];
   for (const encryptedObj of entries) {
     try {
-      const decrypted = await CryptoUtils.decryptData(encryptedObj, sessionKey);
+      const decrypted = await CryptoUtils.decryptData(encryptedObj, sessionKey, sessionKey2);
       decryptedEntries.push(decrypted);
     } catch (e) {
       console.error("Failed to decrypt an entry", e);
     }
   }
-  
+
   if (!regexStr) return { results: decryptedEntries };
-  
+
   try {
     const regex = new RegExp(regexStr, 'i');
-    const results = decryptedEntries.filter(entry => 
+    const results = decryptedEntries.filter(entry =>
       regex.test(entry.website) || regex.test(entry.username)
     );
     return { results };
@@ -149,16 +160,16 @@ async function handleSearchEntries(regexStr) {
 }
 
 async function handleGetCredentialsForUrl(hostname) {
-  if (!sessionKey) return { credentials: [] };
+  if (!sessionKey || !sessionKey2) return { credentials: [] };
   resetAutoLock();
-  
+
   const storageData = await browser.storage.local.get(['entries']);
   const entries = storageData.entries || [];
-  
+
   let matches = [];
   for (const encryptedObj of entries) {
     try {
-      const decrypted = await CryptoUtils.decryptData(encryptedObj, sessionKey);
+      const decrypted = await CryptoUtils.decryptData(encryptedObj, sessionKey, sessionKey2);
       if (decrypted.website && (hostname.includes(decrypted.website) || decrypted.website.includes(hostname))) {
         matches.push({ username: decrypted.username, password: decrypted.password });
       }
@@ -172,23 +183,23 @@ async function handleGetCredentialsForUrl(hostname) {
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "get_status") {
     browser.storage.local.get(['authData']).then(data => {
-      sendResponse({ 
-        isRegistered: !!data.authData, 
-        isLoggedIn: !!sessionKey 
+      sendResponse({
+        isRegistered: !!data.authData,
+        isLoggedIn: !!(sessionKey && sessionKey2)
       });
     });
-    return true; 
+    return true;
   }
-  
+
   if (message.action === "register") {
-    handleRegister(message.username, message.password)
+    handleRegister(message.username, message.password, message.fileNumber)
       .then(res => sendResponse(res))
       .catch(err => sendResponse({ error: err.message }));
     return true;
   }
-  
+
   if (message.action === "login") {
-    handleLogin(message.username, message.password)
+    handleLogin(message.username, message.password, message.fileNumber)
       .then(res => sendResponse(res))
       .catch(err => sendResponse({ error: err.message }));
     return true;
@@ -196,6 +207,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "logout") {
     sessionKey = null;
+    sessionKey2 = null;
     if (autoLockTimer) clearTimeout(autoLockTimer);
     sendResponse({ success: true });
     return true;

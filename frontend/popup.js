@@ -1,27 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
   const DOM = {
-    viewAuth: document.getElementById('view-auth'),
-    viewVault: document.getElementById('view-vault'),
-    authTitle: document.getElementById('auth-title'),
-    authForm: document.getElementById('auth-form'),
-    authUser: document.getElementById('auth-user'),
-    authPass: document.getElementById('auth-pass'),
-    authSubmit: document.getElementById('auth-submit-btn'),
-    logoutBtn: document.getElementById('logout-btn'),
-    msgBox: document.getElementById('message-box'),
-    
-    searchInput: document.getElementById('search-input'),
-    toggleAddBtn: document.getElementById('toggle-add-btn'),
-    addEntryForm: document.getElementById('add-entry-form'),
-    entriesList: document.getElementById('entries-list'),
-    
-    entrySite: document.getElementById('entry-site'),
-    entryUser: document.getElementById('entry-user'),
-    entryPass: document.getElementById('entry-pass')
+    viewLocked:    document.getElementById('view-locked'),
+    viewVault:     document.getElementById('view-vault'),
+    openAuthBtn:   document.getElementById('open-auth-btn'),
+    logoutBtn:     document.getElementById('logout-btn'),
+    msgBox:        document.getElementById('message-box'),
+
+    searchInput:   document.getElementById('search-input'),
+    toggleAddBtn:  document.getElementById('toggle-add-btn'),
+    addEntryForm:  document.getElementById('add-entry-form'),
+    entriesList:   document.getElementById('entries-list'),
+
+    entrySite:     document.getElementById('entry-site'),
+    entryUser:     document.getElementById('entry-user'),
+    entryPass:     document.getElementById('entry-pass')
   };
 
-  let isRegisteredState = false;
-
+  // ── Helpers ────────────────────────────────────────────────────────────────
   function showMessage(msg, isError = false) {
     DOM.msgBox.textContent = msg;
     DOM.msgBox.className = isError ? 'msg-error' : 'msg-success';
@@ -31,59 +26,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setView(isLoggedIn) {
     if (isLoggedIn) {
-      DOM.viewAuth.classList.add('hidden');
+      DOM.viewLocked.classList.add('hidden');
       DOM.viewVault.classList.remove('hidden');
       DOM.logoutBtn.classList.remove('hidden');
       loadEntries();
       DOM.searchInput.focus();
     } else {
-      DOM.viewAuth.classList.remove('hidden');
+      DOM.viewLocked.classList.remove('hidden');
       DOM.viewVault.classList.add('hidden');
       DOM.logoutBtn.classList.add('hidden');
-      if (isRegisteredState) {
-        DOM.authTitle.textContent = "Locked";
-        DOM.authSubmit.textContent = "Unlock";
-      } else {
-        DOM.authTitle.textContent = "Setup Master Password";
-        DOM.authSubmit.textContent = "Register";
-      }
-      DOM.authUser.focus();
     }
   }
 
-  // Init Status
-  browser.runtime.sendMessage({ action: "get_status" }).then(res => {
-    isRegisteredState = res.isRegistered;
+  // ── Init ───────────────────────────────────────────────────────────────────
+  browser.runtime.sendMessage({ action: 'get_status' }).then(res => {
     setView(res.isLoggedIn);
   });
 
-  // Auth Form
-  DOM.authForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const username = DOM.authUser.value;
-    const password = DOM.authPass.value;
-    const action = isRegisteredState ? 'login' : 'register';
-    
-    browser.runtime.sendMessage({ action, username, password }).then(res => {
-      if (res.error) {
-        showMessage(res.error, true);
-      } else {
-        DOM.authPass.value = '';
-        isRegisteredState = true;
-        setView(true);
-      }
-    });
+  // ── Open auth tab ──────────────────────────────────────────────────────────
+  DOM.openAuthBtn.addEventListener('click', () => {
+    browser.tabs.create({ url: browser.runtime.getURL('frontend/auth.html') });
+    window.close();
   });
 
-  // Logout/Lock
+  // ── Logout / Lock ──────────────────────────────────────────────────────────
   DOM.logoutBtn.addEventListener('click', () => {
-    browser.runtime.sendMessage({ action: "logout" }).then(() => {
-      DOM.authPass.value = '';
+    browser.runtime.sendMessage({ action: 'logout' }).then(() => {
       setView(false);
     });
   });
 
-  // Toggle Add Form
+  // ── Toggle Add Form ────────────────────────────────────────────────────────
   DOM.toggleAddBtn.addEventListener('click', () => {
     DOM.addEntryForm.classList.toggle('hidden');
     if (!DOM.addEntryForm.classList.contains('hidden')) {
@@ -91,18 +64,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Add Entry Form
+  // ── Add Entry ──────────────────────────────────────────────────────────────
   DOM.addEntryForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const website = DOM.entrySite.value;
+    const website  = DOM.entrySite.value;
     const username = DOM.entryUser.value;
     const password = DOM.entryPass.value;
-    
-    browser.runtime.sendMessage({ action: "add_entry", website, username, password }).then(res => {
+
+    browser.runtime.sendMessage({ action: 'add_entry', website, username, password }).then(res => {
       if (res.error) {
         showMessage(res.error, true);
       } else {
-        showMessage("Entry saved!");
+        showMessage('Entry saved!');
         DOM.addEntryForm.reset();
         DOM.addEntryForm.classList.add('hidden');
         loadEntries(DOM.searchInput.value);
@@ -110,30 +83,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Search input
+  // ── Search ─────────────────────────────────────────────────────────────────
   DOM.searchInput.addEventListener('input', (e) => {
     loadEntries(e.target.value);
   });
 
-  function loadEntries(regex = "") {
-    browser.runtime.sendMessage({ action: "search_entries", regex }).then(res => {
-      if (res.error) {
-        showMessage(res.error, true);
-        return;
-      }
-      
+  // ── Load Entries ───────────────────────────────────────────────────────────
+  function loadEntries(regex = '') {
+    browser.runtime.sendMessage({ action: 'search_entries', regex }).then(res => {
+      if (res.error) { showMessage(res.error, true); return; }
+
       DOM.entriesList.innerHTML = '';
       const items = res.results || [];
       if (items.length === 0) {
-        DOM.entriesList.innerHTML = '<li style="text-align:center; color:gray; font-size: 0.9rem; margin-top:20px;">No entries found.</li>';
+        DOM.entriesList.innerHTML = '<li style="text-align:center; color:gray; font-size:0.9rem; margin-top:20px;">No entries found.</li>';
         return;
       }
-      
+
       items.forEach(entry => {
         const li = document.createElement('li');
         li.className = 'entry-card';
-        
-        const entryId = entry.id || (entry.website + "|" + entry.username + "|" + entry.timestamp);
+
+        const entryId = entry.id || (entry.website + '|' + entry.username + '|' + entry.timestamp);
         li.innerHTML = `
           <div class="entry-header">
             <div class="entry-site">${escapeHtml(entry.website)}</div>
@@ -141,17 +112,17 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="entry-user">${escapeHtml(entry.username)}</div>
           <div class="entry-pass-container">
-            <span class="entry-pass-value">********</span>
+            <span class="entry-pass-value">••••••••</span>
             <button class="copy-btn">Copy</button>
           </div>
         `;
-        
+
         const copyBtn = li.querySelector('.copy-btn');
-        const delBtn = li.querySelector('.delete-btn');
-        
+        const delBtn  = li.querySelector('.delete-btn');
+
         delBtn.addEventListener('click', () => {
-          if (confirm('Are you sure you want to delete this entry?')) {
-            browser.runtime.sendMessage({ action: "delete_entry", id: entryId }).then(res => {
+          if (confirm('Delete this entry?')) {
+            browser.runtime.sendMessage({ action: 'delete_entry', id: entryId }).then(res => {
               if (res.error) showMessage(res.error, true);
               else loadEntries(DOM.searchInput.value);
             });
@@ -163,18 +134,26 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => copyBtn.textContent = 'Copy', 2000);
           });
         });
-        
+
         DOM.entriesList.appendChild(li);
       });
     });
   }
 
+  // ── Listen for auth tab completion ─────────────────────────────────────────
+  // When the auth tab calls window.close() after success, re-check our status
+  browser.tabs.onRemoved.addListener(() => {
+    browser.runtime.sendMessage({ action: 'get_status' }).then(res => {
+      if (res.isLoggedIn) setView(true);
+    });
+  });
+
   function escapeHtml(unsafe) {
     return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 });
