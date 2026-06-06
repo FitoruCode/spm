@@ -4,7 +4,7 @@ function attemptAutofill() {
 
   const hostname = window.location.hostname;
 
-  browser.runtime.sendMessage({ action: "get_credentials_for_url", hostname: hostname })
+  chrome.runtime.sendMessage({ action: "get_credentials_for_url", hostname: hostname })
     .then(response => {
       if (!response || !response.credentials || response.credentials.length === 0) {
         return;

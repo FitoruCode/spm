@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────
-  browser.runtime.sendMessage({ action: 'get_status' }).then(res => {
+  chrome.runtime.sendMessage({ action: 'get_status' }).then(res => {
     setMode(res.isRegistered);
     if (res.isLoggedIn) {
       // Already unlocked — nothing to do here, close this tab
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     msgBox.classList.add('hidden');
 
     try {
-      const res = await browser.runtime.sendMessage({ action, username, password, fileNumber });
+      const res = await chrome.runtime.sendMessage({ action, username, password, fileNumber });
       if (res.error) {
         showMessage(res.error, 'error');
         setLoading(false);

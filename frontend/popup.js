@@ -39,19 +39,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
-  browser.runtime.sendMessage({ action: 'get_status' }).then(res => {
+  chrome.runtime.sendMessage({ action: 'get_status' }).then(res => {
     setView(res.isLoggedIn);
   });
 
   // ── Open auth tab ──────────────────────────────────────────────────────────
   DOM.openAuthBtn.addEventListener('click', () => {
-    browser.tabs.create({ url: browser.runtime.getURL('frontend/auth.html') });
+    chrome.tabs.create({ url: chrome.runtime.getURL('frontend/auth.html') });
     window.close();
   });
 
   // ── Logout / Lock ──────────────────────────────────────────────────────────
   DOM.logoutBtn.addEventListener('click', () => {
-    browser.runtime.sendMessage({ action: 'logout' }).then(() => {
+    chrome.runtime.sendMessage({ action: 'logout' }).then(() => {
       setView(false);
     });
   });
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = DOM.entryUser.value;
     const password = DOM.entryPass.value;
 
-    browser.runtime.sendMessage({ action: 'add_entry', website, username, password }).then(res => {
+    chrome.runtime.sendMessage({ action: 'add_entry', website, username, password }).then(res => {
       if (res.error) {
         showMessage(res.error, true);
       } else {
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Load Entries ───────────────────────────────────────────────────────────
   function loadEntries(regex = '') {
-    browser.runtime.sendMessage({ action: 'search_entries', regex }).then(res => {
+    chrome.runtime.sendMessage({ action: 'search_entries', regex }).then(res => {
       if (res.error) { showMessage(res.error, true); return; }
 
       DOM.entriesList.innerHTML = '';
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         delBtn.addEventListener('click', () => {
           if (confirm('Delete this entry?')) {
-            browser.runtime.sendMessage({ action: 'delete_entry', id: entryId }).then(res => {
+            chrome.runtime.sendMessage({ action: 'delete_entry', id: entryId }).then(res => {
               if (res.error) showMessage(res.error, true);
               else loadEntries(DOM.searchInput.value);
             });
@@ -142,8 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Listen for auth tab completion ─────────────────────────────────────────
   // When the auth tab calls window.close() after success, re-check our status
-  browser.tabs.onRemoved.addListener(() => {
-    browser.runtime.sendMessage({ action: 'get_status' }).then(res => {
+  chrome.tabs.onRemoved.addListener(() => {
+    chrome.runtime.sendMessage({ action: 'get_status' }).then(res => {
       if (res.isLoggedIn) setView(true);
     });
   });

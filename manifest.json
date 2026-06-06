@@ -15,11 +15,13 @@
         "frontend/auth.js",
         "backend/crypto_utils.js"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "background": {
-    "scripts": ["backend/crypto_utils.js", "backend/background.js"]
+    "service_worker": "backend/background.js"
   },
   "action": {
     "default_popup": "frontend/popup.html",
@@ -27,15 +29,13 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["frontend/autofill.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "frontend/autofill.js"
+      ],
       "run_at": "document_idle"
     }
-  ],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "pwd_manager@example.com",
-      "strict_min_version": "109.0"
-    }
-  }
+  ]
 }

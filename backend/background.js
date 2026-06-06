@@ -1,3 +1,5 @@
+importScripts('crypto_utils.js');
+
 let sessionKey = null;
 let sessionKey2 = null;
 let autoLockTimer = null;
@@ -10,19 +12,19 @@ function resetAutoLock() {
   }, 15 * 60 * 1000);
 }
 
-browser.runtime.onInstalled.addListener(() => {
-  browser.storage.local.get(['authData', 'entries']).then(data => {
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.get(['authData', 'entries']).then(data => {
     let updates = {};
     if (!data.authData) updates.authData = null;
     if (!data.entries) updates.entries = [];
     if (Object.keys(updates).length > 0) {
-      browser.storage.local.set(updates);
+      chrome.storage.local.set(updates);
     }
   });
 });
 
 async function handleRegister(username, password, fileNumber) {
-  const data = await browser.storage.local.get(['authData']);
+  const data = await chrome.storage.local.get(['authData']);
   if (data.authData) {
     throw new Error("Already registered. Please login.");
   }
@@ -46,7 +48,7 @@ async function handleRegister(username, password, fileNumber) {
   sessionKey2 = await CryptoUtils.deriveKey2(fileNumber, salt2);
   resetAutoLock();
 
-  await browser.storage.local.set({
+  await chrome.storage.local.set({
     authData: { salt, salt2, verify: hashVerify, username }
   });
 
@@ -54,7 +56,7 @@ async function handleRegister(username, password, fileNumber) {
 }
 
 async function handleLogin(username, password, fileNumber) {
-  const data = await browser.storage.local.get(['authData']);
+  const data = await chrome.storage.local.get(['authData']);
   if (!data.authData) {
     throw new Error("Not registered yet.");
   }
@@ -93,11 +95,11 @@ async function handleAddEntry(website, entryUsername, entryPassword) {
 
   const encryptedObj = await CryptoUtils.encryptData(dataToEncrypt, sessionKey, sessionKey2);
 
-  const storageData = await browser.storage.local.get(['entries']);
+  const storageData = await chrome.storage.local.get(['entries']);
   const entries = storageData.entries || [];
   entries.push(encryptedObj);
 
-  await browser.storage.local.set({ entries });
+  await chrome.storage.local.set({ entries });
   return { success: true };
 }
 
@@ -105,7 +107,7 @@ async function handleDeleteEntry(id) {
   if (!sessionKey || !sessionKey2) throw new Error("Not authenticated");
   resetAutoLock();
 
-  const storageData = await browser.storage.local.get(['entries']);
+  const storageData = await chrome.storage.local.get(['entries']);
   const entries = storageData.entries || [];
 
   let entryIndexToRemove = -1;
@@ -122,7 +124,7 @@ async function handleDeleteEntry(id) {
 
   if (entryIndexToRemove !== -1) {
     entries.splice(entryIndexToRemove, 1);
-    await browser.storage.local.set({ entries });
+    await chrome.storage.local.set({ entries });
     return { success: true };
   } else {
     throw new Error("Entry not found.");
@@ -133,7 +135,7 @@ async function handleSearchEntries(regexStr) {
   if (!sessionKey || !sessionKey2) throw new Error("Not authenticated");
   resetAutoLock();
 
-  const storageData = await browser.storage.local.get(['entries']);
+  const storageData = await chrome.storage.local.get(['entries']);
   const entries = storageData.entries || [];
 
   let decryptedEntries = [];
@@ -163,7 +165,7 @@ async function handleGetCredentialsForUrl(hostname) {
   if (!sessionKey || !sessionKey2) return { credentials: [] };
   resetAutoLock();
 
-  const storageData = await browser.storage.local.get(['entries']);
+  const storageData = await chrome.storage.local.get(['entries']);
   const entries = storageData.entries || [];
 
   let matches = [];
@@ -180,9 +182,9 @@ async function handleGetCredentialsForUrl(hostname) {
   return { credentials: matches };
 }
 
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "get_status") {
-    browser.storage.local.get(['authData']).then(data => {
+    chrome.storage.local.get(['authData']).then(data => {
       sendResponse({
         isRegistered: !!data.authData,
         isLoggedIn: !!(sessionKey && sessionKey2)
